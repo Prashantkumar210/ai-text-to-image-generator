@@ -8,11 +8,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Frontend domain from environment
+// Frontend domain
 const FRONTEND_URL =
   process.env.FRONTEND_URL || "http://localhost:5173";
 
-// Middleware
+// CORS
 app.use(
   cors({
     origin: FRONTEND_URL,
@@ -23,18 +23,23 @@ app.use(
 
 app.use(express.json());
 
-// POST /generate
+// ✔ FIXED BLACKBOX IMAGE GENERATION
 app.post("/generate", async (req, res) => {
-  try {
-    const { prompt } = req.body;
+  const { prompt } = req.body;
 
-    if (!prompt) {
-      return res.status(400).json({ error: "Prompt is required" });
-    }
+  if (!prompt) {
+    return res.status(400).json({ error: "Prompt is required" });
+  }
+
+  try {
+    console.log("Generating for:", prompt);
 
     const response = await axios.post(
-      "https://www.blackbox.ai/api/image/generate",
-      { prompt },
+      "https://api.blackbox.ai/api/generate-image",
+      {
+        prompt,
+        size: "1024x1024",
+      },
       {
         headers: { "Content-Type": "application/json" },
         timeout: 60000,
@@ -42,42 +47,31 @@ app.post("/generate", async (req, res) => {
     );
 
     const imageUrl =
-      response.data?.imageUrl ||
+      response.data?.image ||
       response.data?.url ||
-      response.data?.image;
+      response.data?.imageUrl ||
+      response.data?.data?.image;
 
     if (!imageUrl) {
+      console.log("API response:", response.data);
       return res.status(500).json({
-        error: "Failed to generate image",
-        message: "The API response did not contain an image URL"
+        error: "Image not returned",
+        message: "Blackbox API gave no usable image URL",
       });
     }
 
     return res.json({ imageUrl });
   } catch (err) {
-    // Handle different types of errors
-    if (err.response) {
-      return res.status(err.response.status || 500).json({
-        error: "Failed to generate image",
-        message: err.response.data?.message || err.message,
-      });
-    }
-
-    if (err.request) {
-      return res.status(503).json({
-        error: "Failed to generate image",
-        message: "The image generation service is currently unavailable",
-      });
-    }
+    console.error("Error:", err.response?.data || err.message);
 
     return res.status(500).json({
       error: "Failed to generate image",
-      message: err.message,
+      message: err.response?.data || err.message,
     });
   }
 });
 
-// Health endpoint
+// Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Server is running" });
 });
