@@ -486,15 +486,18 @@ This project is pre-configured for deployment on modern cloud platforms:
 2. Click "Add New..." → "Project"
 3. Import your Git repository
 4. Configure:
-   - **Framework Preset**: Vite (auto-detected)
+   - **Framework Preset**: Vite
    - **Root Directory**: `client`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
+   - **Install Command**: `npm install`
 5. Add environment variable:
    ```
    VITE_API_URL=https://your-backend.onrender.com
    ```
 6. Deploy and copy your frontend URL
+
+> 💡 **Note**: The `vercel.json` file in the `client` directory will automatically configure most settings. You can also leave Framework Preset as auto-detected if Vercel recognizes it.
 
 #### 3. Update CORS Configuration
 

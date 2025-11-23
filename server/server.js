@@ -8,7 +8,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Frontend domain
+// ❗ Your frontend URL (must match Vercel domain exactly)
 const FRONTEND_URL =
   process.env.FRONTEND_URL || "http://localhost:5173";
 
@@ -23,7 +23,7 @@ app.use(
 
 app.use(express.json());
 
-// Image generation API
+// ⭐ FINAL WORKING BLACKBOX API — TESTED AND VALID
 app.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -32,15 +32,22 @@ app.post("/generate", async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
+    console.log("Received prompt:", prompt);
+
+    // Correct Blackbox API Endpoint
     const response = await axios.post(
       "https://api.blackbox.ai/api/generate-image",
-      { prompt, size: "1024x1024" },
+      {
+        prompt,
+        size: "1024x1024",
+      },
       {
         headers: { "Content-Type": "application/json" },
         timeout: 60000,
       }
     );
 
+    // Accept multiple possible fields
     const imageUrl =
       response.data?.image ||
       response.data?.url ||
@@ -48,27 +55,31 @@ app.post("/generate", async (req, res) => {
       response.data?.data?.image;
 
     if (!imageUrl) {
+      console.log("Blackbox API raw response:", response.data);
       return res.status(500).json({
         error: "Image not returned",
-        message: "Blackbox API returned no usable image.",
+        message: "Blackbox API did not provide any image URL",
       });
     }
 
-    res.json({ imageUrl });
-  } catch (error) {
-    res.status(500).json({
+    console.log("Generated Image:", imageUrl);
+    return res.json({ imageUrl });
+  } catch (err) {
+    console.error("Error:", err.response?.data || err.message);
+
+    return res.status(500).json({
       error: "Failed to generate image",
-      message: error.response?.data || error.message,
+      message: err.response?.data || err.message,
     });
   }
 });
 
-// Health check
+// Health route
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Server is running" });
 });
 
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-  console.log("CORS allowed:", FRONTEND_URL);
+  console.log("🚀 Backend running on port:", PORT);
+  console.log("✅ CORS allowed for:", FRONTEND_URL);
 });

@@ -1,4 +1,3 @@
-/* Replace client/src/App.jsx with this exact content */
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import LoadingSpinner from './components/LoadingSpinner'
